@@ -35,7 +35,7 @@ jobs:
               name: "TestCLI",
               platforms: [.macOS(.v13)],
               dependencies: [
-                  .package(path: "../")
+                  .package(name: "ExerciseClassifier", path: "../")
               ],
               targets: [
                   .executableTarget(name: "TestCLI", dependencies: [
