@@ -20,10 +20,14 @@ class WrappedModel(torch.nn.Module):
         self.m = m
 
     def forward(self, input_ids, attention_mask):
+        # Keep dtypes explicit for stable CoreML conversion.
+        input_ids = input_ids.to(torch.int64)
+        attention_mask = attention_mask.to(torch.float32)
         out = self.m(input_ids=input_ids, attention_mask=attention_mask)
         return out.logits
 
 wrapped = WrappedModel(model)
+wrapped.eval()
 
 max_len = 128
 dummy = tokenizer(
