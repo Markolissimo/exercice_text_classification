@@ -46,35 +46,46 @@ jobs:
           EOF
           
           cat > TestCLI/Sources/main.swift << 'EOF'
+          import Foundation
           import ExerciseClassifier
 
-          print("=== ExerciseClassifier Test ===")
-          print("Version: \(ExerciseClassifier.version)")
+          @main
+          struct TestRunner {
+              static func main() async {
+                  await runOnMainActor()
+              }
 
-          let service = ExerciseClassifierService()
+              @MainActor
+              static func runOnMainActor() {
+                  print("=== ExerciseClassifier Test ===")
+                  print("Version: \(ExerciseClassifier.version)")
 
-          let testCases = [
-              "I did 20 pushups today",
-              "Squat exercise for legs",
-              "Holding a plank position",
-              "Taking a rest break",
-              "Jumping jacks cardio"
-          ]
+                  let service = ExerciseClassifierService()
 
-          print("\nTesting keyword fallback classification:\n")
-          for text in testCases {
-              service.classify(text: text)
-              print("Input: \"\(text)\"")
-              print("  → Exercise: \(service.currentExercise)")
-              print("  → Confidence: \(String(format: "%.2f", service.confidence))")
-              print("")
+                  let testCases = [
+                      "I did 20 pushups today",
+                      "Squat exercise for legs",
+                      "Holding a plank position",
+                      "Taking a rest break",
+                      "Jumping jacks cardio"
+                  ]
+
+                  print("\nTesting keyword fallback classification:\n")
+                  for text in testCases {
+                      service.classify(text: text)
+                      print("Input: \"\(text)\"")
+                      print("  → Exercise: \(service.currentExercise)")
+                      print("  → Confidence: \(String(format: "%.2f", service.confidence))")
+                      print("")
+                  }
+
+                  print("Summary:")
+                  let summary = service.getWorkoutSummary()
+                  print("  Total reps: \(summary.totalReps)")
+                  print("  Total calories: \(String(format: "%.1f", summary.totalCalories))")
+                  print("\nTest completed successfully!")
+              }
           }
-
-          print("Summary:")
-          let summary = service.getWorkoutSummary()
-          print("  Total reps: \(summary.totalReps)")
-          print("  Total calories: \(String(format: "%.1f", summary.totalCalories))")
-          print("\nTest completed successfully!")
           EOF
 
       - name: Run test CLI
