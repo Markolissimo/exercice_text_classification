@@ -31,15 +31,9 @@ public struct ExerciseClassifierView: View {
             }
             .navigationTitle("Exercise Classifier")
             .toolbar {
-#if os(macOS)
                 ToolbarItem(placement: .automatic) {
                     resetButton
                 }
-#else
-                ToolbarItem(placement: .topBarTrailing) {
-                    resetButton
-                }
-#endif
             }
         }
     }
