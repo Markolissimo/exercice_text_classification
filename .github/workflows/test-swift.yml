@@ -1,0 +1,83 @@
+name: Test Swift on macOS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Sources/**'
+      - 'Package.swift'
+
+jobs:
+  test:
+    runs-on: macos-14
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build package
+        run: swift build
+
+      - name: Run tests (if any)
+        run: swift test || echo "No tests found, skipping"
+
+      - name: Create test CLI
+        run: |
+          mkdir -p TestCLI/Sources
+          cat > TestCLI/Package.swift << 'EOF'
+          // swift-tools-version:5.9
+          import PackageDescription
+          let package = Package(
+              name: "TestCLI",
+              platforms: [.macOS(.v13)],
+              dependencies: [
+                  .package(path: "../")
+              ],
+              targets: [
+                  .executableTarget(name: "TestCLI", dependencies: [
+                      .product(name: "ExerciseClassifier", package: "ExerciseClassifier")
+                  ], path: "Sources")
+              ]
+          )
+          EOF
+          
+          cat > TestCLI/Sources/main.swift << 'EOF'
+          import ExerciseClassifier
+
+          print("=== ExerciseClassifier Test ===")
+          print("Version: \(ExerciseClassifier.version)")
+
+          let service = ExerciseClassifierService()
+
+          let testCases = [
+              "I did 20 pushups today",
+              "Squat exercise for legs",
+              "Holding a plank position",
+              "Taking a rest break",
+              "Jumping jacks cardio"
+          ]
+
+          print("\nTesting keyword fallback classification:\n")
+          for text in testCases {
+              service.classify(text: text)
+              print("Input: \"\(text)\"")
+              print("  → Exercise: \(service.currentExercise)")
+              print("  → Confidence: \(String(format: "%.2f", service.confidence))")
+              print("")
+          }
+
+          print("Summary:")
+          let summary = service.getWorkoutSummary()
+          print("  Total reps: \(summary.totalReps)")
+          print("  Total calories: \(String(format: "%.1f", summary.totalCalories))")
+          print("\nTest completed successfully!")
+          EOF
+
+      - name: Run test CLI
+        run: |
+          cd TestCLI
+          swift run

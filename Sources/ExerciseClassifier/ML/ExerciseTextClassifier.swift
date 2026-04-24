@@ -6,10 +6,8 @@ public class ExerciseTextClassifier {
     
     private var mlModel: MLModel?
     private var vocabulary: [String: Int] = [:]
+    private var modelLabels: [String] = []
     private let maxLength = 128
-    
-    // Zero-shot NLI labels used during conversion
-    private let nliLabels = ["Pushup", "Squat", "Jumping Jack", "Plank", "Rest"]
     
     public init() {}
     
@@ -36,6 +34,16 @@ public class ExerciseTextClassifier {
         } else {
             // Use basic fallback vocabulary
             self.vocabulary = createBasicVocabulary()
+        }
+        
+        // Load model labels
+        if let labelsURL = Bundle.main.url(forResource: "labels", withExtension: "json"),
+           let data = try? Data(contentsOf: labelsURL),
+           let labels = try? JSONDecoder().decode([String].self, from: data) {
+            self.modelLabels = labels
+        } else {
+            // Default labels for sentiment model
+            self.modelLabels = ["NEGATIVE", "POSITIVE"]
         }
     }
     
@@ -185,18 +193,29 @@ public class ExerciseTextClassifier {
     }
     
     private func mapIndexToExerciseType(index: Int) -> ExerciseType {
-        // This mapping depends on how the model was trained
-        // For zero-shot NLI with our labels:
-        guard index < nliLabels.count else { return .unknown }
+        guard index < modelLabels.count else { return .unknown }
         
-        switch nliLabels[index].lowercased() {
-        case "pushup": return .pushup
+        let label = modelLabels[index].lowercased()
+        
+        // Map model output labels to ExerciseType
+        // For sentiment model (NEGATIVE/POSITIVE), we use keyword fallback
+        // For exercise-specific model, we map directly
+        switch label {
+        case "pushup", "push-up": return .pushup
         case "squat": return .squat
-        case "jumping jack": return .jumpingJack
+        case "jumping jack", "jumpingjack": return .jumpingJack
         case "plank": return .plank
         case "rest": return .rest
+        case "positive": return .pushup  // Sentiment model: positive -> exercise detected
+        case "negative": return .rest    // Sentiment model: negative -> no exercise
         default: return .unknown
         }
+    }
+    
+    /// Get the raw model prediction label (for debugging)
+    public func getRawLabel(for index: Int) -> String? {
+        guard index < modelLabels.count else { return nil }
+        return modelLabels[index]
     }
     
     private func createBasicVocabulary() -> [String: Int] {

@@ -39,19 +39,20 @@ jobs:
           cd scripts
           ditto -c -k --sequesterRsrc --keepParent ExerciseClassifier.mlpackage ExerciseClassifier.mlpackage.zip
 
-      - name: Zip tokenizer files
-        run: |
-          cd scripts
-          ditto -c -k --sequesterRsrc --keepParent tokenizer_files tokenizer_files.zip
-
       - name: Upload CoreML model
         uses: actions/upload-artifact@v4
         with:
           name: ExerciseClassifier-CoreML
-          path: scripts/ExerciseClassifier.mlpackage.zip
+          path: scripts/ExerciseClassifier.mlpackage
 
-      - name: Upload tokenizer
+      - name: Upload vocab.json
         uses: actions/upload-artifact@v4
         with:
-          name: ExerciseClassifier-Tokenizer
-          path: scripts/tokenizer_files.zip
+          name: vocab
+          path: scripts/vocab.json
+
+      - name: Upload labels.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: labels
+          path: scripts/labels.json

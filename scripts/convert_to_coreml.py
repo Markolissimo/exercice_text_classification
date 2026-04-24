@@ -68,6 +68,20 @@ output_path = f"{OUT_NAME}.mlpackage"
 mlmodel.save(output_path)
 print(f"Saved: {output_path}")
 
-# Save tokenizer vocab for Swift-side tokenization
+# Save tokenizer vocab as JSON for Swift-side tokenization
+import json
+
+vocab = tokenizer.get_vocab()
+with open("vocab.json", "w", encoding="utf-8") as f:
+    json.dump(vocab, f, ensure_ascii=False)
+print(f"Saved vocab.json ({len(vocab)} tokens)")
+
+# Save model labels for Swift-side mapping
+model_labels = list(model.config.id2label.values())
+with open("labels.json", "w", encoding="utf-8") as f:
+    json.dump(model_labels, f, ensure_ascii=False)
+print(f"Saved labels.json: {model_labels}")
+
+# Also save tokenizer files for reference
 tokenizer.save_pretrained("tokenizer_files")
 print("Saved tokenizer files to: tokenizer_files/")
