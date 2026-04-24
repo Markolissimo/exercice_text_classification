@@ -1,110 +1,97 @@
 # Exercise Classifier
 
-Text-based exercise classification using CoreML + HuggingFace model on iOS/macOS.
+Text-based exercise classification using a HuggingFace model converted to CoreML, plus keyword fallback.
 
 ## Features
 
-- **Text-based Classification**: Describe exercise in natural language
-- **CoreML Integration**: Uses converted HuggingFace model for on-device inference
-- **Zero-shot Classification**: Works without fine-tuning via NLI model
-- **Keyword Fallback**: Pattern-based detection when model unavailable
-- **SwiftUI Interface**: Modern text input UI with example prompts
+- Text input classification (`"I did 20 pushups"`)
+- CoreML inference via `MLModel`
+- Configurable HF model conversion (`MODEL_ID` env var)
+- Generated tokenizer/label metadata for Swift (`vocab.json`, `labels.json`)
+- Keyword fallback when model is missing/unavailable
+- SwiftUI demo view + macOS CI smoke tests (no local Xcode required)
 
 ## Architecture
 
 ```
 ExerciseClassifier/
-├── Models/
-│   └── ExerciseType.swift              # Exercise types enum
-├── ML/
-│   └── ExerciseTextClassifier.swift    # CoreML classifier
-├── Services/
-│   └── ExerciseClassifierService.swift # Main orchestration service
-├── Views/
-│   └── ExerciseClassifierView.swift    # SwiftUI text input interface
-├── App/
-│   └── ExerciseClassifierApp.swift     # App entry point
-├── scripts/
-│   └── convert_to_coreml.py            # HF → CoreML conversion
+├── Sources/ExerciseClassifier/
+│   ├── Models/ExerciseType.swift
+│   ├── ML/ExerciseTextClassifier.swift
+│   ├── Services/ExerciseClassifierService.swift
+│   ├── Views/ExerciseClassifierView.swift
+│   └── App/ExerciseClassifierApp.swift
+├── scripts/convert_to_coreml.py
 └── .github/workflows/
-    └── coreml-convert.yml              # GitHub Actions for model conversion
+    ├── coreml-convert.yml
+    └── test-swift.yml
 ```
 
-## How It Works
+## Convert HuggingFace Model to CoreML
 
-### 1. Text Input
-User describes the exercise in natural language:
-- "I did 10 pushups"
-- "Squat exercise"
-- "Holding a plank position"
+### Option A (Recommended): GitHub Actions
 
-### 2. Text Processing
-The classifier tokenizes and processes input:
-- **CoreML Model** (if available): Direct inference via MLModel
-- **Keyword Fallback**: Pattern-based exercise detection
+1. Push repository to GitHub.
+2. Open **Actions** → **Convert HF to CoreML** → **Run workflow**.
+3. Download artifacts:
+   - `ExerciseClassifier-CoreML` (contains `ExerciseClassifier.mlpackage`)
+   - `vocab` (contains `vocab.json`)
+   - `labels` (contains `labels.json`)
 
-### 3. Classification Output
-- **exerciseType**: Detected exercise (pushup, squat, etc.)
-- **confidence**: Prediction confidence (0.0 - 1.0)
+Default model in workflow:
+- `distilbert-base-uncased-finetuned-sst-2-english`
 
-## Getting the CoreML Model
+You can change model by editing `MODEL_ID` in:
+- `.github/workflows/coreml-convert.yml`
 
-### Option 1: GitHub Actions (Recommended)
-1. Push this repo to GitHub
-2. Go to **Actions** → **Convert HF to CoreML** → **Run workflow**
-3. Download artifact `ExerciseClassifier-CoreML`
-4. Unzip and add `ExerciseClassifier.mlpackage` to Xcode project
+### Option B: Manual conversion on macOS
 
-### Option 2: Manual Conversion (requires macOS)
 ```bash
 cd scripts
-pip install torch transformers coremltools sentencepiece
+python -m pip install --upgrade pip
+pip install "torch==2.5.0" "transformers==4.46.3" "coremltools==8.3.0" sentencepiece
+
+# Optional
+# export HF_TOKEN=...
+# export MODEL_ID=distilbert-base-uncased-finetuned-sst-2-english
+
 python convert_to_coreml.py
 ```
 
-### Adding Model to Xcode
-1. Drag `ExerciseClassifier.mlpackage` into Xcode project
-2. Ensure "Copy items if needed" is checked
-3. Xcode auto-compiles to `.mlmodelc`
-4. Load in code: `service.loadModel(named: "ExerciseClassifier")`
+Produced files:
+- `ExerciseClassifier.mlpackage`
+- `vocab.json`
+- `labels.json`
 
-## Usage
+## Swift Integration
+
+1. Add `ExerciseClassifier.mlpackage` to app target.
+2. Add `vocab.json` and `labels.json` to bundle resources.
+3. Load model in app/service:
 
 ```swift
-import ExerciseClassifier
-
-// Create the service
-let service = ExerciseClassifierService()
-
-// Classify from text
-service.classify(text: "I just finished 20 pushups")
-
-// Access results
-print(service.currentExercise)      // .pushup
-print(service.confidence)           // 0.85
-print(service.lastInputText)        // "I just finished 20 pushups"
-
-// Get summary
-let summary = service.getWorkoutSummary()
-print(summary.totalCalories)
+let service = ExerciseClassifierService(modelName: "ExerciseClassifier")
+service.classify(text: "I did 20 pushups")
 ```
 
-## Supported Exercises
+If model loading fails, service automatically uses keyword fallback.
 
-| Exercise | Keywords |
-|----------|----------|
-| Pushup | pushup, push-up, chest press, floor press |
-| Squat | squat, leg bend, knee bend |
-| Jumping Jack | jumping jack, star jump |
-| Plank | plank, core hold, static hold |
-| Rest | rest, break, pause |
+## Testing Without Xcode
+
+Use GitHub Action:
+- **Actions** → **Test Swift on macOS**
+
+This workflow runs:
+- `swift build`
+- `swift test` (if present)
+- CLI smoke test using `ExerciseClassifierService`
 
 ## Requirements
 
-- iOS 16.0+ / macOS 13.0+
-- Xcode 15+
 - Swift 5.9+
+- iOS 16+ / macOS 13+
+- (Optional) Xcode 15+ for app UI integration
 
 ## License
 
-MIT License
+MIT

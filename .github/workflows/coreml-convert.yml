@@ -34,11 +34,6 @@ jobs:
           cd scripts
           python convert_to_coreml.py
 
-      - name: Zip mlpackage
-        run: |
-          cd scripts
-          ditto -c -k --sequesterRsrc --keepParent ExerciseClassifier.mlpackage ExerciseClassifier.mlpackage.zip
-
       - name: Upload CoreML model
         uses: actions/upload-artifact@v4
         with:

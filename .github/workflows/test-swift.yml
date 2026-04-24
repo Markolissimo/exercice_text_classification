@@ -51,12 +51,8 @@ jobs:
 
           @main
           struct TestRunner {
-              static func main() async {
-                  await runOnMainActor()
-              }
-
               @MainActor
-              static func runOnMainActor() {
+              static func main() {
                   print("=== ExerciseClassifier Test ===")
                   print("Version: \(ExerciseClassifier.version)")
 

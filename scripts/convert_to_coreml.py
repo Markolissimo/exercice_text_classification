@@ -2,12 +2,12 @@ import torch
 import coremltools as ct
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import os
+import json
 
 # Default is a CoreML-friendly model for reliable prototype conversion.
 # To force a different model, set MODEL_ID in the workflow env.
 MODEL_ID = os.getenv("MODEL_ID", "distilbert-base-uncased-finetuned-sst-2-english")
 OUT_NAME = "ExerciseClassifier"
-LABELS = ["Pushup", "Squat", "Jumping Jack", "Plank", "Rest"]
 
 print(f"Loading model: {MODEL_ID}")
 hf_token = os.getenv("HF_TOKEN")
@@ -61,7 +61,7 @@ mlmodel = ct.convert(
 )
 
 mlmodel.author = "ExerciseClassifier"
-mlmodel.short_description = "Zero-shot text classification for exercise detection"
+mlmodel.short_description = f"Text classification model converted from {MODEL_ID}"
 mlmodel.version = "1.0.0"
 
 output_path = f"{OUT_NAME}.mlpackage"
@@ -69,8 +69,6 @@ mlmodel.save(output_path)
 print(f"Saved: {output_path}")
 
 # Save tokenizer vocab as JSON for Swift-side tokenization
-import json
-
 vocab = tokenizer.get_vocab()
 with open("vocab.json", "w", encoding="utf-8") as f:
     json.dump(vocab, f, ensure_ascii=False)
