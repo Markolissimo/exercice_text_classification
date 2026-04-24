@@ -3,7 +3,9 @@ import coremltools as ct
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import os
 
-MODEL_ID = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
+# Default is a CoreML-friendly model for reliable prototype conversion.
+# To force a different model, set MODEL_ID in the workflow env.
+MODEL_ID = os.getenv("MODEL_ID", "distilbert-base-uncased-finetuned-sst-2-english")
 OUT_NAME = "ExerciseClassifier"
 LABELS = ["Pushup", "Squat", "Jumping Jack", "Plank", "Rest"]
 

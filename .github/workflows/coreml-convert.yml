@@ -29,6 +29,7 @@ jobs:
       - name: Convert model to CoreML
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          MODEL_ID: distilbert-base-uncased-finetuned-sst-2-english
         run: |
           cd scripts
           python convert_to_coreml.py
