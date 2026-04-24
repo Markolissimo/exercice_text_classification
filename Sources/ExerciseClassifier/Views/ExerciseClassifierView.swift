@@ -31,17 +31,27 @@ public struct ExerciseClassifierView: View {
             }
             .navigationTitle("Exercise Classifier")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Reset") {
-                        service.reset()
-                        inputText = ""
-                    }
+#if os(macOS)
+                ToolbarItem(placement: .automatic) {
+                    resetButton
                 }
+#else
+                ToolbarItem(placement: .topBarTrailing) {
+                    resetButton
+                }
+#endif
             }
         }
     }
     
     // MARK: - Subviews
+
+    private var resetButton: some View {
+        Button("Reset") {
+            service.reset()
+            inputText = ""
+        }
+    }
     
     private var textInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
