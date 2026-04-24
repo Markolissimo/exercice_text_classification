@@ -20,9 +20,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install torch transformers coremltools sentencepiece
+          pip install "torch==2.7.0" "transformers==4.51.3" "coremltools==8.3.0" sentencepiece
+
+      - name: Validate tool versions
+        run: |
+          python -c "import torch, coremltools as ct; print('torch', torch.__version__); print('coremltools', ct.__version__)"
 
       - name: Convert model to CoreML
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           cd scripts
           python convert_to_coreml.py

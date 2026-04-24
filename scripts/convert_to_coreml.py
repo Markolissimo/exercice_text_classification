@@ -1,15 +1,18 @@
 import torch
 import coremltools as ct
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import os
 
 MODEL_ID = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
 OUT_NAME = "ExerciseClassifier"
 LABELS = ["Pushup", "Squat", "Jumping Jack", "Plank", "Rest"]
 
 print(f"Loading model: {MODEL_ID}")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-model = AutoModelForSequenceClassification.from_pretrained(MODEL_ID)
+hf_token = os.getenv("HF_TOKEN")
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=hf_token)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_ID, token=hf_token)
 model.eval()
+model.float()
 
 class WrappedModel(torch.nn.Module):
     def __init__(self, m):
@@ -48,6 +51,7 @@ mlmodel = ct.convert(
     ],
     outputs=[ct.TensorType(name="logits")],
     minimum_deployment_target=ct.target.iOS16,
+    compute_precision=ct.precision.FLOAT32,
 )
 
 mlmodel.author = "ExerciseClassifier"
